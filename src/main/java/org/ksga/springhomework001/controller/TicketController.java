@@ -1,9 +1,11 @@
 package org.ksga.springhomework001.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import org.ksga.springhomework001.domain.Ticket;
 import org.ksga.springhomework001.dto.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -48,6 +50,7 @@ public class TicketController {
     // createNewTicket
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+
     public ResponseEntity<?> createNewTicket(@RequestBody TicketCreateRequest ticketCreateRequest){
         Ticket newTicket = new Ticket(
                 nextTicketId++,
@@ -77,6 +80,7 @@ public class TicketController {
     }
     // Retrieve All Tickets
     @GetMapping
+    @Operation(summary = "Get all tickets")
     public ResponseEntity<ApiResponseTicket<TicketListResponse>> getAllTickets(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -112,7 +116,7 @@ public class TicketController {
     // Retrieve a Ticket by ID (using @PathVariable)
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponseTicket<TicketResponse>> getTicketByID(@PathVariable Integer id) {
-        // Find ticket by ID (this is an example, replace with your actual service/repository call)
+        // Find ticket by ID
         Optional<Ticket> ticketOptional = tickets.stream()
                 .filter(ticket -> ticket.getTicketId().equals(id))
                 .findFirst();
@@ -184,9 +188,94 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponseTicket.createSuccessResponse("Tickets retrieved successfully", responsePayload));
     }
 
+    // Filter Tickets by Ticket Status and Travel Date (using @RequestParam)
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponseTicket<TicketListResponse>> filterTicketsByStatusAndDate(@RequestParam Ticket.TicketStatus ticketStatus,
+                                                                                              @RequestParam String travelDate,
+                                                                                              @RequestParam(defaultValue = "0") int page,
+                                                                                              @RequestParam(defaultValue = "10") int size) {
+        // Filter tickets by ticket status and travel date
+        List<Ticket> filteredTickets = tickets.stream()
+                .filter(ticket -> ticket.getTicketStatus().equals(ticketStatus) && ticket.getTravelDate().equals(travelDate))
+                .collect(Collectors.toList());
 
-//    Filter Tickets by Ticket Status and Travel Date (using @RequestParam)
-//    Update a Ticket by ID
-//    Delete a Ticket by ID
+        if (filteredTickets.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponseTicket.createErrorResponse("No tickets found for given status and date", HttpStatus.NOT_FOUND));
+        }
 
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, filteredTickets.size());
+
+        List<TicketResponse> ticketResponses = filteredTickets.subList(startIndex, endIndex)
+                .stream().map(ticket -> new TicketResponse(
+                        ticket.getTicketId(),
+                        ticket.getPassengerName(),
+                        ticket.getTravelDate(),
+                        ticket.getSourceStation(),
+                        ticket.getDestinationStation(),
+                        ticket.getPrice(),
+                        ticket.getPaymentStatus(),
+                        ticket.getTicketStatus(),
+                        ticket.getSeatNumber()
+                ))
+                .collect(Collectors.toList());
+
+        // Calculate total pages
+        int totalElements = tickets.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+
+        PaginationInfo paginationInfo = new PaginationInfo(totalElements, page + 1, size, totalPages);
+        TicketListResponse responsePayload = new TicketListResponse(ticketResponses, paginationInfo);
+
+        return ResponseEntity.ok(ApiResponseTicket.createSuccessResponse("filter by ticket status and travel date is successfully", responsePayload));
+    }
+    //    Update a Ticket by ID
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponseTicket<TicketResponse>> updateTicketById(@PathVariable int id,
+                                                                                        @RequestBody TicketUpdateRequest ticketUpdateRequest){
+        // Find ticket by ID
+        Optional<Ticket> ticketOptional = tickets.stream()
+                .filter(ticket -> ticket.getTicketId().equals(id))
+                .findFirst();
+
+        if (ticketOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponseTicket.createErrorResponse("Ticket not found", HttpStatus.NOT_FOUND));
+        }
+
+        Ticket ticket = ticketOptional.get();
+
+        // Update ticket fields
+        ticket.setPassengerName(ticketUpdateRequest.passengerName());
+        ticket.setTravelDate(ticketUpdateRequest.travelDate());
+        ticket.setSourceStation(ticketUpdateRequest.sourceStation());
+        ticket.setDestinationStation(ticketUpdateRequest.destinationStation());
+        ticket.setPrice(ticketUpdateRequest.price());
+        ticket.setPaymentStatus(ticketUpdateRequest.paymentStatus());
+        ticket.setTicketStatus(ticketUpdateRequest.ticketStatus());
+        ticket.setSeatNumber(ticketUpdateRequest.seatNumber());
+
+        TicketResponse ticketResponse = new TicketResponse(ticket.getTicketId(), ticket.getPassengerName(), ticket.getSourceStation(), ticket.getDestinationStation(),
+                ticket.getTravelDate(), ticket.getPrice(), ticket.getPaymentStatus(), ticket.getTicketStatus(), ticket.getSeatNumber());
+
+        return ResponseEntity.ok(ApiResponseTicket.createSuccessResponse("Ticket updated successfully", ticketResponse));
+    }
+    // Delete a Ticket by ID return void
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponseTicket<Void>> deleteTicketById(@PathVariable int id){
+        // Find ticket by ID
+        Optional<Ticket> ticketOptional = tickets.stream()
+                .filter(ticket -> ticket.getTicketId().equals(id))
+                .findFirst();
+
+        if (ticketOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponseTicket.createErrorResponse("Ticket not found", HttpStatus.NOT_FOUND));
+        }
+
+        tickets.remove(ticketOptional.get());
+
+        return ResponseEntity.ok(ApiResponseTicket.createSuccessResponse("Ticket deleted successfully", null));
+    }
 }
