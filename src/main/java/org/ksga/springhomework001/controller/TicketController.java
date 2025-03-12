@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 public class TicketController {
 
     List<Ticket> tickets = new ArrayList<>();
-    // id Auto Increment
     private int nextTicketId = 22;
 
 
@@ -34,23 +33,23 @@ public class TicketController {
         tickets.add(new Ticket(7, "Koh Lanta", "2025-03-12", "Phnom Penh", "kohla", 450.0, true, Ticket.TicketStatus.BOOKED, "s7"));
         tickets.add(new Ticket(8, "Koh San", "2025-03-12", "Phnom Penh", "kohsa", 500.0, false, Ticket.TicketStatus.CANCELLED, "s8"));
         tickets.add(new Ticket(9, "Koh Bang", "2025-03-12", "Phnom Penh", "kohba", 550.0, true, Ticket.TicketStatus.COMPLETED, "s9"));
-        tickets.add(new Ticket(10, "Koh Svay", "2025-03-12", "Phnom Penh", "kohsv", 600.0, true, Ticket.TicketStatus.COMPLETED, "s10"));
+        tickets.add(new Ticket(10, "Koh Svay", "2025-03-12", "Phnom Penh", "kohsv", 600.0, false, Ticket.TicketStatus.COMPLETED, "s10"));
         tickets.add(new Ticket(11, "Koh Pong", "2025-03-12", "Phnom Penh", "kohpo", 650.0, true, Ticket.TicketStatus.BOOKED, "s11"));
         tickets.add(new Ticket(12, "Koh Ton", "2025-03-12", "Phnom Penh", "kohto", 700.0, true, Ticket.TicketStatus.BOOKED, "s12"));
-        tickets.add(new Ticket(13, "Koh Ton", "2025-03-12", "Phnom Penh", "kohto", 750.0, true, Ticket.TicketStatus.BOOKED, "s13"));
-        tickets.add(new Ticket(14, "Koh Svay", "2025-03-12", "Phnom Penh", "kohsv", 800.0, true, Ticket.TicketStatus.COMPLETED, "s14"));
-        tickets.add(new Ticket(15, "Koh Ton", "2025-03-12", "Phnom Penh", "kohto", 850.0, true, Ticket.TicketStatus.BOOKED, "s15"));
-        tickets.add(new Ticket(16, "Koh Ton", "2025-03-12", "Phnom Penh", "kohto", 900.0, true, Ticket.TicketStatus.COMPLETED, "s16"));
-        tickets.add(new Ticket(17, "Koh Ton", "2025-03-12", "Phnom Penh", "kohto", 950.0, true, Ticket.TicketStatus.COMPLETED, "s17"));
-        tickets.add(new Ticket(18, "Koh Ton", "2025-03-12", "Phnom Penh", "kohto", 1000.0, true, Ticket.TicketStatus.BOOKED, "s18"));
-        tickets.add(new Ticket(19, "Koh Ton", "2025-03-12", "Phnom Penh", "kohto", 1050.0, true, Ticket.TicketStatus.BOOKED, "s19"));
-        tickets.add(new Ticket(20, "Koh Ton", "2025-03-12", "Phnom Penh", "kohto", 1100.0, true, Ticket.TicketStatus.BOOKED, "s20"));
-        tickets.add(new Ticket(21, "Koh Ton", "2025-03-12", "Phnom Penh", "kohto", 1150.0, true, Ticket.TicketStatus.BOOKED, "s21"));
+        tickets.add(new Ticket(13, "pich Fina", "2025-03-12", "Phnom Penh", "kohto", 750.0, true, Ticket.TicketStatus.BOOKED, "s13"));
+        tickets.add(new Ticket(14, "Sok Cheada", "2025-03-12", "Phnom Penh", "kohsv", 800.0, true, Ticket.TicketStatus.COMPLETED, "s14"));
+        tickets.add(new Ticket(15, "Srey Pich", "2025-03-12", "Phnom Penh", "kohto", 850.0, true, Ticket.TicketStatus.BOOKED, "s15"));
+        tickets.add(new Ticket(16, "Srey Ying", "2025-03-12", "Phnom Penh", "kohto", 900.0, false, Ticket.TicketStatus.COMPLETED, "s16"));
+        tickets.add(new Ticket(17, "Chan Tola", "2025-03-12", "Phnom Penh", "kohto", 950.0, true, Ticket.TicketStatus.COMPLETED, "s17"));
+        tickets.add(new Ticket(18, "Souy Vichea", "2025-03-12", "Phnom Penh", "kohto", 1000.0, true, Ticket.TicketStatus.BOOKED, "s18"));
+        tickets.add(new Ticket(19, "meas Pisey", "2025-03-12", "Phnom Penh", "kohto", 1050.0, true, Ticket.TicketStatus.BOOKED, "s19"));
+        tickets.add(new Ticket(20, "Sok Daro", "2025-03-12", "Phnom Penh", "kohto", 1100.0, false, Ticket.TicketStatus.BOOKED, "s20"));
+        tickets.add(new Ticket(21, "Chan Dara", "2025-03-12", "Phnom Penh", "kohto", 1150.0, true, Ticket.TicketStatus.BOOKED, "s21"));
     }
     // createNewTicket
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-
+    @Operation(summary = "Create a new tickets")
     public ResponseEntity<?> createNewTicket(@RequestBody TicketCreateRequest ticketCreateRequest){
         Ticket newTicket = new Ticket(
                 nextTicketId++,
@@ -78,14 +77,53 @@ public class TicketController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponseTicket.createSuccessResponse("Ticket created successfully", ticketResponse));
     }
-    // Retrieve All Tickets
+
+    // Create multiple tickets in a single request.
+    @PostMapping("/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create multiple tickets in a single request")
+    public ResponseEntity<?> createMultipleTickets(@RequestBody List<TicketCreateRequest> ticketCreateRequests){
+        List<Ticket> newTickets = ticketCreateRequests.stream()
+               .map(ticketCreateRequest -> new Ticket(
+                        nextTicketId++,
+                        ticketCreateRequest.passengerName(),
+                        ticketCreateRequest.travelDate(),
+                        ticketCreateRequest.sourceStation(),
+                        ticketCreateRequest.destinationStation(),
+                        ticketCreateRequest.price(),
+                        ticketCreateRequest.paymentStatus(),
+                        ticketCreateRequest.ticketStatus(),
+                        ticketCreateRequest.seatNumber()
+                ))
+               .collect(Collectors.toList());
+        tickets.addAll(newTickets);
+
+        List<TicketResponse> ticketResponses = newTickets.stream()
+               .map(ticket -> new TicketResponse(
+                        ticket.getTicketId(),
+                        ticket.getPassengerName(),
+                        ticket.getTravelDate(),
+                        ticket.getSourceStation(),
+                        ticket.getDestinationStation(),
+                        ticket.getPrice(),
+                        ticket.getPaymentStatus(),
+                        ticket.getTicketStatus(),
+                        ticket.getSeatNumber()
+                ))
+               .collect(Collectors.toList());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponseTicket.createSuccessResponse("Create multiple tickets is successfully", ticketResponses));
+    }
+
+    // Get All Tickets
     @GetMapping
     @Operation(summary = "Get all tickets")
     public ResponseEntity<ApiResponseTicket<TicketListResponse>> getAllTickets(
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        int startIndex = page * size;
+        int startIndex = (page - 1) * size;
         int endIndex = Math.min(startIndex + size, tickets.size());
 
         List<TicketResponse> ticketResponses = tickets.subList(startIndex, endIndex)
@@ -113,8 +151,9 @@ public class TicketController {
     }
 
 
-    // Retrieve a Ticket by ID (using @PathVariable)
+    // Retrieve a Ticket by ID
     @GetMapping("/{id}")
+    @Operation(summary = "Get a ticket by id")
     public ResponseEntity<ApiResponseTicket<TicketResponse>> getTicketByID(@PathVariable Integer id) {
         // Find ticket by ID
         Optional<Ticket> ticketOptional = tickets.stream()
@@ -145,10 +184,11 @@ public class TicketController {
     }
 
 
-    //    Search for a Ticket by Passenger Name (using @RequestParam)
+    //    Search for a Ticket by Passenger Name
     @GetMapping("/search")
+    @Operation(summary = "Search tickets by passenger name")
     public ResponseEntity<ApiResponseTicket<TicketListResponse>> searchTicketsByPassengerName(@RequestParam String passengerName,
-                                                                                          @RequestParam(defaultValue = "0") int page,
+                                                                                          @RequestParam(defaultValue = "1") int page,
                                                                                           @RequestParam(defaultValue = "10") int size) {
         // Filter tickets by passengerName
         List<Ticket> filteredTickets = tickets.stream()
@@ -160,7 +200,7 @@ public class TicketController {
                     .body(ApiResponseTicket.createErrorResponse("No tickets found for given passenger name", HttpStatus.NOT_FOUND));
         }
 
-        int startIndex = page * size;
+        int startIndex = (page - 1) * size;
         int endIndex = Math.min(startIndex + size, filteredTickets.size());
 
         List<TicketResponse> ticketResponses = filteredTickets.subList(startIndex, endIndex)
@@ -188,11 +228,12 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponseTicket.createSuccessResponse("Tickets retrieved successfully", responsePayload));
     }
 
-    // Filter Tickets by Ticket Status and Travel Date (using @RequestParam)
+    // Filter Tickets by Ticket Status and Travel Date
     @GetMapping("/filter")
+    @Operation(summary = "Filter tickets by Ticket Status and Travel Date")
     public ResponseEntity<ApiResponseTicket<TicketListResponse>> filterTicketsByStatusAndDate(@RequestParam Ticket.TicketStatus ticketStatus,
                                                                                               @RequestParam String travelDate,
-                                                                                              @RequestParam(defaultValue = "0") int page,
+                                                                                              @RequestParam(defaultValue = "1") int page,
                                                                                               @RequestParam(defaultValue = "10") int size) {
         // Filter tickets by ticket status and travel date
         List<Ticket> filteredTickets = tickets.stream()
@@ -204,7 +245,7 @@ public class TicketController {
                     .body(ApiResponseTicket.createErrorResponse("No tickets found for given status and date", HttpStatus.NOT_FOUND));
         }
 
-        int startIndex = page * size;
+        int startIndex = (page - 1) * size;
         int endIndex = Math.min(startIndex + size, filteredTickets.size());
 
         List<TicketResponse> ticketResponses = filteredTickets.subList(startIndex, endIndex)
@@ -232,6 +273,7 @@ public class TicketController {
     }
     //    Update a Ticket by ID
     @PutMapping("/{id}")
+    @Operation(summary = "Update a ticket by ID")
     public ResponseEntity<ApiResponseTicket<TicketResponse>> updateTicketById(@PathVariable int id,
                                                                                         @RequestBody TicketUpdateRequest ticketUpdateRequest){
         // Find ticket by ID
@@ -261,8 +303,22 @@ public class TicketController {
 
         return ResponseEntity.ok(ApiResponseTicket.createSuccessResponse("Ticket updated successfully", ticketResponse));
     }
-    // Delete a Ticket by ID return void
+
+    // Update payment status for multiple ticket ID
+    @PutMapping
+    @Operation(summary = "Update payment status for multiple tickets")
+    public ResponseEntity<ApiResponseTicket<Void>> updatePaymentStatusForMultipleTickets(@RequestBody TicketUpdatePaymentStatusRequest ticketUpdatePaymentStatusRequest){
+        // Update payment status for multiple tickets
+        tickets.stream()
+               .filter(ticket -> ticketUpdatePaymentStatusRequest.ticketIds().contains(ticket.getTicketId()))
+               .forEach(ticket -> ticket.setPaymentStatus(ticketUpdatePaymentStatusRequest.paymentStatus()));
+
+        return ResponseEntity.ok(ApiResponseTicket.createSuccessResponse("Payment status updated successfully for multiple tickets", null));
+    }
+
+    // Delete a Ticket by ID
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete a ticket by ID")
     public ResponseEntity<ApiResponseTicket<Void>> deleteTicketById(@PathVariable int id){
         // Find ticket by ID
         Optional<Ticket> ticketOptional = tickets.stream()
